@@ -239,7 +239,18 @@ function showPage(id,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   btn.classList.add('active');
+  location.hash=id;
 }
+(function(){
+  const hash=location.hash.replace('#','');
+  if(hash==='contact'){
+    document.getElementById('home').classList.remove('active');
+    document.getElementById('contact').classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(b=>{
+      b.classList.toggle('active',b.textContent.trim().toLowerCase()==='contact');
+    });
+  }
+})();
 let tracks=[];
 const audio=document.getElementById('audioPlayer');
 let current=-1;
