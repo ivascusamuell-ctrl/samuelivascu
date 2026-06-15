@@ -123,7 +123,7 @@ html,body{height:100%;margin:0;padding:0}
           <img class="yt-img" id="yt-img-1" src="" alt="">
           <div class="yt-play"><svg viewBox="0 0 68 48" width="52"><path d="M66.5 7.7A8.5 8.5 0 0 0 60.7 2C55.4.5 34 .5 34 .5S12.6.5 7.3 2A8.5 8.5 0 0 0 1.5 7.7C0 13 0 24 0 24s0 11 1.5 16.3A8.5 8.5 0 0 0 7.3 46C12.6 47.5 34 47.5 34 47.5s21.4 0 26.7-1.5a8.5 8.5 0 0 0 5.8-5.7C68 35 68 24 68 24s0-11-1.5-16.3z" fill="rgba(0,0,0,0.7)"/><path d="M27 34l18-10-18-10v20z" fill="#fff"/></svg></div>
         </div>
-        <div class="video-label" id="video-label-1"></div>
+        <div class="video-label" id="video-label-1">DOOM 10th Anniversary</div>
       </div>
     </div>
 
@@ -298,12 +298,9 @@ async function loadVideosFromDropbox(){
     const text=await r.text();
     const lines=text.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
     lines.forEach((line,i)=>{
-      // Each line is: VIDEO N "youtube link"  -> title is the text before the quote, link is inside the quote
+      // Each line is: TITLE "youtube link"  -> only the link (inside quotes) is used; titles are set in the HTML
       const quoteMatch=line.match(/"([^"]+)"/);
       const link=quoteMatch?quoteMatch[1]:'';
-      const label=line.replace(/"[^"]*"/,'').trim();
-      const labelEl=document.getElementById('video-label-'+(i+1));
-      if(labelEl&&label)labelEl.textContent=label;
       if(link){
         const idMatch=link.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
         const id=idMatch?idMatch[1]:link.trim();
