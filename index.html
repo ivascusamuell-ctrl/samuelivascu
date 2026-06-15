@@ -280,9 +280,8 @@ async function fetchDuration(path,index){
     });
   }catch(e){console.error('Duration fetch error:',e);}
 }
-async function loadVideoLabels(){
+async function loadVideosFromDropbox(){
   try{
-    // First list root to find exact filename
     const listRes=await fetch('https://dropbox-proxy.ivascusamuell.workers.dev?endpoint=https://api.dropboxapi.com/2/files/list_folder',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -290,58 +289,37 @@ async function loadVideoLabels(){
     });
     const listData=await listRes.json();
     console.log('Root files:',listData.entries.map(e=>e.name));
-    const txtFile=listData.entries.find(e=>e.name.toLowerCase().includes('text for video'));
-    if(!txtFile){console.error('Text file not found in root');return;}
+    const videoFile=listData.entries.find(e=>e.name.toLowerCase().includes('video urls'));
+    if(!videoFile){console.error('Video file not found in root');return;}
     const r=await fetch('https://dropbox-proxy.ivascusamuell.workers.dev?endpoint=https://content.dropboxapi.com/2/files/download',{
       method:'POST',
-      headers:{
-        'Dropbox-API-Arg':JSON.stringify({path:txtFile.path_lower})
-      }
+      headers:{'Dropbox-API-Arg':JSON.stringify({path:videoFile.path_lower})}
     });
     const text=await r.text();
     const lines=text.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
     lines.forEach((line,i)=>{
-      const match=line.match(/"([^"]+)"/);
-      if(match){
-        const el=document.getElementById('video-label-'+(i+1));
-        if(el)el.textContent=match[1];
+      // Each line is: VIDEO N "youtube link"  -> title is the text before the quote, link is inside the quote
+      const quoteMatch=line.match(/"([^"]+)"/);
+      const link=quoteMatch?quoteMatch[1]:'';
+      const label=line.replace(/"[^"]*"/,'').trim();
+      const labelEl=document.getElementById('video-label-'+(i+1));
+      if(labelEl&&label)labelEl.textContent=label;
+      if(link){
+        const idMatch=link.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+        const id=idMatch?idMatch[1]:link.trim();
+        if(!id)return;
+        const thumb=document.getElementById('yt-thumb-'+(i+1));
+        const img=document.getElementById('yt-img-'+(i+1));
+        if(thumb){thumb.onclick=()=>loadYT(thumb,id);}
+        if(img){
+          img.src='https://img.youtube.com/vi/'+id+'/maxresdefault.jpg';
+          img.onerror=()=>{img.src='https://img.youtube.com/vi/'+id+'/hqdefault.jpg';img.onerror=null;};
+        }
       }
     });
-  }catch(e){console.error('Video label load error:',e);}
+  }catch(e){console.error('Video load error:',e);}
 }
-loadVideoLabels();
-async function loadVideoURLs(){
-  try{
-    const listRes=await fetch('https://dropbox-proxy.ivascusamuell.workers.dev?endpoint=https://api.dropboxapi.com/2/files/list_folder',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({path:'',recursive:false})
-    });
-    const listData=await listRes.json();
-    const urlFile=listData.entries.find(e=>e.name.toLowerCase().includes('video urls'));
-    if(!urlFile){console.error('Video URLs file not found');return;}
-    const r=await fetch('https://dropbox-proxy.ivascusamuell.workers.dev?endpoint=https://content.dropboxapi.com/2/files/download',{
-      method:'POST',
-      headers:{'Dropbox-API-Arg':JSON.stringify({path:urlFile.path_lower})}
-    });
-    const text=await r.text();
-    const matches=[...text.matchAll(/"([^"]+)"/g)].map(m=>m[1]);
-    matches.forEach((raw,i)=>{
-      // Extract video ID from full URL or use as-is if already an ID
-      const idMatch=raw.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
-      const id=idMatch?idMatch[1]:raw.trim();
-      if(!id)return;
-      const thumb=document.getElementById('yt-thumb-'+(i+1));
-      const img=document.getElementById('yt-img-'+(i+1));
-      if(thumb){thumb.onclick=()=>loadYT(thumb,id);}
-      if(img){
-        img.src='https://img.youtube.com/vi/'+id+'/maxresdefault.jpg';
-        img.onerror=()=>{img.src='https://img.youtube.com/vi/'+id+'/hqdefault.jpg';img.onerror=null;};
-      }
-    });
-  }catch(e){console.error('Video URL load error:',e);}
-}
-loadVideoURLs();
+loadVideosFromDropbox();
 async function loadTracksFromDropbox(){
   const trackList=document.getElementById('trackList');
   trackList.innerHTML='<div style="padding:1rem;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);opacity:0.6">Loading tracks...</div>';
@@ -360,7 +338,7 @@ async function loadTracksFromDropbox(){
     trackList.innerHTML='';
     for(let i=0;i<audioFiles.length;i++){
       const file=audioFiles[i];
-      const name=file.name.replace(/\.[^.]+$/,'').replace(/-/g,' ');
+      const name=file.name.replace(/\.[^.]+$/,'').replace(/^\d+[\s.\-)]+/,'').replace(/-/g,' ');
       tracks.push({name,path:file.path_lower});
       fetchDuration(file.path_lower,i);
       const num=String(i+1).padStart(2,'0');
