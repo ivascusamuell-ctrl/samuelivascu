@@ -349,7 +349,19 @@ function alignLogo(){
 }
 document.fonts.ready.then(()=>{alignLogo();setTimeout(alignLogo,100);});
 window.addEventListener('resize',alignLogo);
+function restoreThumb(card){
+  if(!card)return;
+  const t=card.querySelector('.yt-thumb');
+  card.classList.remove('is-playing');
+  if(!t||!t.__thumbHtml)return;
+  t.innerHTML=t.__thumbHtml;
+  const vid=t.dataset.vid;
+  if(vid&&!t.__bound)t.onclick=()=>loadYT(t,vid);
+  card.style.transform='';
+  if(window.__carouselSync)window.__carouselSync();
+}
 function loadYT(el, id){
+  if(!el.__thumbHtml)el.__thumbHtml=el.innerHTML;
   const iframe = document.createElement('iframe');
   iframe.src = 'https://www.youtube.com/embed/' + id + '?autoplay=1';
   iframe.allowFullscreen = true;
@@ -361,8 +373,9 @@ function loadYT(el, id){
   if(card){
     document.querySelectorAll('.video-card.is-playing').forEach(c=>{if(c!==card)c.classList.remove('is-playing');});
     card.classList.add('is-playing');
+    if(window.__carouselPoke)window.__carouselPoke();
     if(matchMedia('(pointer:coarse)').matches){
-      try{if(!(navigator.vibrate&&navigator.vibrate(16))&&window.__iosTap)window.__iosTap();}catch(err){}
+      try{if(!(navigator.vibrate&&navigator.vibrate(45))&&window.__iosTap)window.__iosTap();}catch(err){}
     }
     try{card.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});}catch(err){}
     if(window.__carouselSync)window.__carouselSync();
@@ -654,11 +667,12 @@ async function submitForm(){
         c.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));
         c.removeAttribute('id');
         const t=c.querySelector('.yt-thumb');
-        if(t){t.removeAttribute('onclick');t.addEventListener('click',()=>{if(t.dataset.vid)loadYT(t,t.dataset.vid);});}
+        if(t){t.removeAttribute('onclick');t.__bound=1;t.addEventListener('click',()=>{if(t.dataset.vid)loadYT(t,t.dataset.vid);});}
         return c;
       };
       const before=document.createDocumentFragment(),after=document.createDocumentFragment();
-      originals.forEach((o,i)=>{const a=mk(o,i),b=mk(o,i);clones.push(a,b);before.appendChild(a);after.appendChild(b);});
+      for(let s=0;s<2;s++)originals.forEach((o,i)=>{const c=mk(o,i);clones.push(c);before.appendChild(c);});
+      for(let s=0;s<2;s++)originals.forEach((o,i)=>{const c=mk(o,i);clones.push(c);after.appendChild(c);});
       wheel.insertBefore(before,originals[0]);
       wheel.appendChild(after);
       cards=Array.from(wheel.querySelectorAll('.video-card'));
@@ -680,18 +694,31 @@ async function submitForm(){
     function setW(){return (N>1&&cards.length>N)?(cards[N].offsetLeft-cards[0].offsetLeft):0;}
     let raf=null;
     function cfg(){return mq.matches?{sc:0.26,op:0.55,play:1.10}:{sc:0.14,op:0.45,play:1.05};}
+    // Percentage widths round to sub-pixels, so sets aren't all the same width.
+    // Jump by the exact offset between a card and its twin instead of an average.
     function loopFix(){
-      const w=setW(); if(!w)return false;
-      const sl=wheel.scrollLeft;
-      if(sl<w*0.5||sl>w*1.5){
-        const prev=wheel.style.scrollBehavior;
-        wheel.style.scrollBehavior='auto';
-        wheel.scrollLeft=sl+(sl<w*0.5?w:-w);
-        void wheel.offsetWidth;
-        wheel.style.scrollBehavior=prev;
-        return true;
+      if(smoothUntil>performance.now())return false;   // don't fight an in-flight arrow scroll
+      if(cards.length<=N*2)return false;
+      const rect=wheel.getBoundingClientRect(),mid=rect.left+rect.width/2;
+      let bi=-1,bd=1e9;
+      for(let i=0;i<cards.length;i++){
+        const r=cards[i].getBoundingClientRect();
+        const d=Math.abs(r.left+r.width/2-mid);
+        if(d<bd){bd=d;bi=i;}
       }
-      return false;
+      if(bi<0)return false;
+      let target=bi;
+      while(target<N*2)target+=N;
+      while(target>=N*3)target-=N;
+      if(target===bi)return false;
+      const delta=cards[target].offsetLeft-cards[bi].offsetLeft;
+      if(!delta)return false;
+      const prev=wheel.style.scrollBehavior;
+      wheel.style.scrollBehavior='auto';
+      wheel.scrollLeft=wheel.scrollLeft+delta;
+      void wheel.offsetWidth;
+      wheel.style.scrollBehavior=prev;
+      return true;
     }
     function update(){
       raf=null;
@@ -719,7 +746,7 @@ async function submitForm(){
     window.__carouselSync=req;
 
     // ---- tactile "lock in" when a card settles in the centre ----
-    let popCard=null,popStart=0,lockedEl=null,idleT=null;
+    let popCard=null,popStart=0,lockedEl=null,idleT=null,smoothUntil=0;
     function popTick(){
       if(!popCard)return;
       const t=(performance.now()-popStart)/520;
@@ -746,7 +773,7 @@ async function submitForm(){
     }
     function haptic(){
       if(!coarse.matches)return;
-      try{if(navigator.vibrate&&navigator.vibrate(12))return;}catch(e){}
+      try{if(navigator.vibrate&&navigator.vibrate(35))return;}catch(e){}
       initIosTap();
       if(iosTap){try{iosTap.click();}catch(e){}}
     }
@@ -759,6 +786,7 @@ async function submitForm(){
     }
     function settle(){
       // a teleport swaps in the twin card at the same spot - adopt it without re-firing
+      smoothUntil=0;
       if(loopFix()){lockedEl=nearest();req();return;}
       const c=nearest(); if(!c)return;
       // only lock once it has actually arrived in the centre
@@ -768,6 +796,7 @@ async function submitForm(){
       if(st&&Math.abs(r.left+r.width/2-mid)/st>0.16){idleT=setTimeout(settle,90);return;}
       if(c!==lockedEl){
         lockedEl=c;
+        document.querySelectorAll('.video-card.is-playing').forEach(pc=>{if(pc!==c)restoreThumb(pc);});
         if(!reduce.matches&&!popCard){popCard=c;popStart=performance.now();requestAnimationFrame(popTick);}
         haptic();
       }
@@ -776,23 +805,107 @@ async function submitForm(){
     }
     function step(dir){
       const s=(cards.length>1)?(cards[1].offsetLeft-cards[0].offsetLeft):Math.round(wheel.clientWidth*0.5);
+      smoothUntil=performance.now()+700;
       wheel.scrollBy({left:dir*s,behavior:'smooth'});
     }
-    if(prevBtn){prevBtn.disabled=false;prevBtn.addEventListener('click',()=>step(-1));}
-    if(nextBtn){nextBtn.disabled=false;nextBtn.addEventListener('click',()=>step(1));}
+    /* ---- idle auto-scroll: a slow drift on desktop after 5s of no interaction ---- */
+    const AUTO_DELAY=5000, AUTO_SPEED=45;   // px per second
+    let autoOn=false,autoRAF=null,autoIdle=null,autoLast=0,autoPos=0,onScreen=true,snapBack=null;
+    function autoAllowed(){
+      return !coarse.matches && !mq.matches && !reduce.matches
+        && !document.hidden && onScreen
+        && !wheel.querySelector('.video-card.is-playing');
+    }
+    function markCentred(){
+      const c=nearest();
+      if(c&&c!==lockedEl){lockedEl=c;cards.forEach(x=>x.classList.toggle('centered',x===lockedEl));}
+    }
+    function autoTick(ts){
+      if(!autoOn){autoRAF=null;return;}
+      if(wheel.querySelector('.video-card.is-playing')){stopAuto(false);return;}
+      if(!autoLast)autoLast=ts;
+      const dt=Math.min(ts-autoLast,64)/1000; autoLast=ts;
+      autoPos+=AUTO_SPEED*dt;
+      wheel.scrollLeft=autoPos;
+      autoRAF=requestAnimationFrame(autoTick);
+    }
+    function startAuto(){
+      if(autoOn)return;
+      if(!autoAllowed()){clearTimeout(autoIdle);autoIdle=setTimeout(startAuto,AUTO_DELAY);return;}
+      autoOn=true; autoLast=0; autoPos=wheel.scrollLeft;
+      clearTimeout(snapBack);
+      wheel.style.scrollSnapType='none';   // snapping would fight a continuous drift
+      autoRAF=requestAnimationFrame(autoTick);
+    }
+    function stopAuto(settleNow){
+      clearTimeout(autoIdle);
+      if(!autoOn)return;
+      autoOn=false;
+      if(autoRAF)cancelAnimationFrame(autoRAF); autoRAF=null;
+      if(settleNow){
+        const c=nearest();
+        if(c){
+          smoothUntil=performance.now()+700;
+          wheel.scrollTo({left:c.offsetLeft-(wheel.clientWidth-c.offsetWidth)/2,behavior:'smooth'});
+        }
+        clearTimeout(snapBack);
+        snapBack=setTimeout(()=>{wheel.style.scrollSnapType='';},760);
+      }else{
+        wheel.style.scrollSnapType='';
+      }
+    }
+    function poke(){ stopAuto(true); clearTimeout(autoIdle); autoIdle=setTimeout(startAuto,AUTO_DELAY); }
+    ['wheel','pointerdown','touchstart','keydown'].forEach(ev=>
+      wheel.addEventListener(ev,poke,{passive:true}));
+    document.addEventListener('visibilitychange',()=>{
+      if(document.hidden)stopAuto(false); else {clearTimeout(autoIdle);autoIdle=setTimeout(startAuto,AUTO_DELAY);}
+    });
+    try{
+      new IntersectionObserver(es=>{
+        onScreen=es[0].isIntersecting;
+        if(!onScreen)stopAuto(false);
+        else {clearTimeout(autoIdle);autoIdle=setTimeout(startAuto,AUTO_DELAY);}
+      },{threshold:0.25}).observe(wheel);
+    }catch(e){}
+    window.__carouselPoke=poke;
+
+    if(prevBtn){prevBtn.disabled=false;prevBtn.addEventListener('click',()=>{poke();haptic();step(-1);});}
+    if(nextBtn){nextBtn.disabled=false;nextBtn.addEventListener('click',()=>{poke();haptic();step(1);});}
     wheel.addEventListener('scroll',()=>{
+      if(loopFix()){lockedEl=nearest(); if(autoOn)autoPos=wheel.scrollLeft;}
       req(); if(nextBtn)nextBtn.classList.remove('hint');
+      if(autoOn){markCentred();return;}      // drifting: no snap, no pop, no haptic
       clearTimeout(idleT); idleT=setTimeout(settle,200);
     },{passive:true});
+    clearTimeout(autoIdle); autoIdle=setTimeout(startAuto,AUTO_DELAY);
     addEventListener('resize',req);
     if(mq.addEventListener)mq.addEventListener('change',req);
     originals.forEach(c=>c.addEventListener('animationend',()=>{c.classList.add('entered');req();},{once:true}));
     setTimeout(()=>{originals.forEach(c=>c.classList.add('entered'));req();},1300);
     // start on the middle (real) set so it can scroll both ways forever
-    function home(){const w=setW();if(w){wheel.style.scrollBehavior='auto';wheel.scrollLeft=w;void wheel.offsetWidth;wheel.style.scrollBehavior='';}lockedEl=nearest();cards.forEach(x=>x.classList.toggle('centered',x===lockedEl));req();}
+    function home(){if(cards.length>N*2){wheel.style.scrollBehavior='auto';wheel.scrollLeft=cards[N*2].offsetLeft-cards[0].offsetLeft;void wheel.offsetWidth;wheel.style.scrollBehavior='';}lockedEl=nearest();cards.forEach(x=>x.classList.toggle('centered',x===lockedEl));req();}
     home(); setTimeout(home,120); setTimeout(req,400); addEventListener('load',()=>{home();});
     if(!reduce.matches&&nextBtn){
       setTimeout(()=>{nextBtn.classList.add('hint');setTimeout(()=>nextBtn.classList.remove('hint'),3600);},1400);
+    }
+    // ---- desktop only: drift on its own until the visitor takes over ----
+    if(!coarse.matches&&!reduce.matches){
+      const GAP=5000, RESUME=9000;
+      let hovering=false, pausedUntil=0;
+      const hold=()=>{pausedUntil=performance.now()+RESUME;};
+      function canAuto(){
+        return !hovering && !document.hidden
+          && !wheel.querySelector('.video-card.is-playing')
+          && performance.now()>pausedUntil;
+      }
+      const host=wheel.closest('.videos-wrap')||wheel;
+      host.addEventListener('mouseenter',()=>{hovering=true;});
+      host.addEventListener('mouseleave',()=>{hovering=false;});
+      ['wheel','pointerdown','keydown'].forEach(ev=>host.addEventListener(ev,hold,{passive:true}));
+      if(prevBtn)prevBtn.addEventListener('click',hold);
+      if(nextBtn)nextBtn.addEventListener('click',hold);
+      document.addEventListener('visibilitychange',()=>{if(!document.hidden)pausedUntil=performance.now()+1500;});
+      setTimeout(()=>{setInterval(()=>{if(canAuto())step(1);},GAP);},3500);
     }
   }
   const els=document.querySelectorAll('.reveal');
