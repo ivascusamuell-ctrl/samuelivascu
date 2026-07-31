@@ -812,7 +812,9 @@ async function submitForm(){
     const AUTO_DELAY=5000, AUTO_SPEED=45;   // px per second
     let autoOn=false,autoRAF=null,autoIdle=null,autoLast=0,autoPos=0,onScreen=true,snapBack=null;
     function autoAllowed(){
-      return !coarse.matches && !mq.matches && !reduce.matches
+      // Tied to the LAYOUT, not the input device: anything showing the desktop
+      // layout drifts - including a phone set to "Request desktop site".
+      return !mq.matches && !reduce.matches
         && !document.hidden && onScreen
         && !wheel.querySelector('.video-card.is-playing');
     }
