@@ -59,6 +59,8 @@ html,body{height:100%;margin:0;padding:0}
 .db-note{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(25,25,25,0.35);margin-bottom:0.75rem}
 .db-btn{display:inline-flex;align-items:center;gap:8px;background:transparent;border:0.5px solid rgba(25,25,25,0.3);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;padding:0.55rem 1.1rem;border-radius:2px;cursor:pointer;text-decoration:none;transition:border-color 0.2s,color 0.2s}
 .db-btn:hover{border-color:var(--bur);color:var(--bur)}
+.projects-intro{margin-bottom:0}
+.projects-intro .about-text+.about-text{margin-top:1rem}
 .about-section{background:#fff;border:0.5px solid var(--border);border-radius:4px;padding:2rem;--fit:1}
 .composer-layout{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:stretch}
 .composer-photo-wrap{border:0.5px solid var(--border);border-radius:4px;overflow:hidden;flex:1;min-height:auto;position:relative}
@@ -195,7 +197,8 @@ html,body{height:100%;margin:0;padding:0}
     </div>
     <nav class="nav">
       <button class="nav-btn active" onclick="showPage('home',this)"><span class="nav-text">Home</span></button>
-      <button class="nav-btn" onclick="showPage('contact',this)"><span class="nav-text">Contact</span></button>
+      <button class="nav-btn" onclick="showPage('projects',this)"><span class="nav-text">Projects</span></button>
+        <button class="nav-btn" onclick="showPage('contact',this)"><span class="nav-text">Contact</span></button>
     </nav>
   </header>
 
@@ -243,29 +246,7 @@ html,body{height:100%;margin:0;padding:0}
       <button class="car-arrow next" type="button" aria-label="Next video"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M8.5 4.5L16 12l-7.5 7.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
 
-    <div class="divider"></div>
-    <p class="section-label">Browse More</p>
-
-    <div class="audio-section">
-      <div class="audio-header">
-        <div class="db-icon">
-          <svg width="22" height="18" viewBox="0 0 40 36"><path d="M10 0L0 6.5l10 6.5 10-6.5L10 0zm20 0L20 6.5l10 6.5 10-6.5L30 0zM0 19.5L10 26l10-6.5-10-6.5L0 19.5zm30-6.5l-10 6.5 10 6.5 10-6.5-10-6.5zM10 28l10 6.5 10-6.5-10-6.5L10 28z"/></svg>
-        </div>
-        <div class="audio-title">Dropbox Player</div>
-      </div>
-      <div id="trackList">
-        <div style="padding:1rem;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);opacity:0.6">Loading tracks...</div>
-      </div>
-      
-      <div class="db-embed">
-        <p class="db-note">Full Catalogue</p>
-        <a class="db-btn" href="https://www.dropbox.com/scl/fo/dxn0ua57gdb98qbla9yhm/AFG24opamMRaUkUv3O76DdQ?rlkey=rekrap75bfb6a2hnixt62yoxr&dl=0" target="_blank">
-          <svg width="12" height="10" viewBox="0 0 40 36" style="fill:currentColor"><path d="M10 0L0 6.5l10 6.5 10-6.5L10 0zm20 0L20 6.5l10 6.5 10-6.5L30 0zM0 19.5L10 26l10-6.5-10-6.5L0 19.5zm30-6.5l-10 6.5 10 6.5 10-6.5-10-6.5zM10 28l10 6.5 10-6.5-10-6.5L10 28z"/></svg>
-          Open Dropbox
-        </a>
-      </div>
-    </div>
-
+    
     <div class="divider"></div>
     <p class="section-label">The Composer</p>
     <div class="composer-layout">
@@ -299,7 +280,40 @@ html,body{height:100%;margin:0;padding:0}
     </div>
   </div>
 
-  <div id="contact" class="page">
+    <div id="projects" class="page">
+    <p class="section-label">Projects</p>
+    <div class="about-section projects-intro">
+      <div class="about-title">Selected Work</div>
+      <p class="about-text">Samuel Ivascu writes music that does more than accompany a scene &mdash; it carries it. His scores for horror and dark fantasy move with the precision of someone who understands that tension lives in restraint as much as in impact, and that a single sustained note, placed correctly, can do the work of an entire orchestra.</p>
+      <p class="about-text">His work spans re-scores of major franchise trailers, full audio redesigns, and integration work for games, moving fluently between acoustic instrumentation, sound design, and electronic processing. Drawing on an Eastern European harmonic language and a self-taught instinct later sharpened by formal training, he builds sonic environments that feel authored rather than assembled &mdash; textured, deliberate, and unmistakably his own.</p>
+      <p class="about-text">The selection below is a working catalogue. The full portfolio is available on request.</p>
+    </div>
+
+    <div class="divider"></div>
+    <p class="section-label">Browse More</p>
+
+<div class="audio-section">
+      <div class="audio-header">
+        <div class="db-icon">
+          <svg width="22" height="18" viewBox="0 0 40 36"><path d="M10 0L0 6.5l10 6.5 10-6.5L10 0zm20 0L20 6.5l10 6.5 10-6.5L30 0zM0 19.5L10 26l10-6.5-10-6.5L0 19.5zm30-6.5l-10 6.5 10 6.5 10-6.5-10-6.5zM10 28l10 6.5 10-6.5-10-6.5L10 28z"/></svg>
+        </div>
+        <div class="audio-title">Dropbox Player</div>
+      </div>
+      <div id="trackList">
+        <div style="padding:1rem;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);opacity:0.6">Loading tracks...</div>
+      </div>
+      
+      <div class="db-embed">
+        <p class="db-note">Full Portfolio</p>
+        <a class="db-btn" href="#contact" onclick="goContact(event)">
+          <svg width="12" height="10" viewBox="0 0 24 20" style="fill:none;stroke:currentColor;stroke-width:2"><rect x="1" y="1" width="22" height="18" rx="2"/><path d="M1 4l11 8L23 4"/></svg>
+          Request Access to Full Portfolio
+        </a>
+      </div>
+    </div>
+  </div>
+
+<div id="contact" class="page">
     <div class="contact-wrap">
       <h1 class="contact-title">Get in touch</h1>
       <p class="contact-sub">For bookings, collaborations, or general inquiries, drop a message below</p>
@@ -388,13 +402,20 @@ function showPage(id,btn){
   btn.classList.add('active');
   location.hash=id;
 }
+function goContact(e){
+  if(e&&e.preventDefault)e.preventDefault();
+  const btn=Array.prototype.find.call(document.querySelectorAll('.nav-btn'),
+    b=>b.textContent.trim().toLowerCase()==='contact');
+  if(btn)showPage('contact',btn);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
 (function(){
   const hash=location.hash.replace('#','');
-  if(hash==='contact'){
-    document.getElementById('home').classList.remove('active');
-    document.getElementById('contact').classList.add('active');
+  if(hash&&hash!=='home'&&document.getElementById(hash)){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById(hash).classList.add('active');
     document.querySelectorAll('.nav-btn').forEach(b=>{
-      b.classList.toggle('active',b.textContent.trim().toLowerCase()==='contact');
+      b.classList.toggle('active',b.textContent.trim().toLowerCase()===hash);
     });
   }
 })();
