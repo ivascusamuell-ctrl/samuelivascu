@@ -861,13 +861,21 @@ async function submitForm(){
     function settle(){
       // a teleport swaps in the twin card at the same spot - adopt it without re-firing
       smoothUntil=0;
-      if(loopFix()){lockedEl=nearest();req();return;}
+      if(loopFix()){lockedEl=nearest();req();idleT=setTimeout(settle,90);return;}
       const c=nearest(); if(!c)return;
       // only lock once it has actually arrived in the centre
       const rect=wheel.getBoundingClientRect(),mid=rect.left+rect.width/2;
       const r=c.getBoundingClientRect();
       const st=(cards.length>1)?(cards[1].offsetLeft-cards[0].offsetLeft):rect.width;
-      if(st&&Math.abs(r.left+r.width/2-mid)/st>0.16){idleT=setTimeout(settle,90);return;}
+      const off=st?Math.abs(r.left+r.width/2-mid)/st:0;
+      if(off>0.16){idleT=setTimeout(settle,90);return;}
+      // stranded between snap points (touch momentum died mid-way): ease onto the card
+      if(off>0.02){
+        smoothUntil=performance.now()+600;
+        wheel.scrollTo({left:c.offsetLeft-(wheel.clientWidth-c.offsetWidth)/2,behavior:'smooth'});
+        idleT=setTimeout(settle,320);
+        return;
+      }
       if(c!==lockedEl){
         lockedEl=c;
         document.querySelectorAll('.video-card.is-playing').forEach(pc=>{if(pc!==c)restoreThumb(pc);});
@@ -948,7 +956,8 @@ async function submitForm(){
     if(prevBtn){prevBtn.disabled=false;prevBtn.addEventListener('click',()=>{poke();haptic();step(-1);});}
     if(nextBtn){nextBtn.disabled=false;nextBtn.addEventListener('click',()=>{poke();haptic();step(1);});}
     wheel.addEventListener('scroll',()=>{
-      if(loopFix()){lockedEl=nearest(); if(autoOn)autoPos=wheel.scrollLeft;}
+      // touch momentum + snap breaks if scrollLeft teleports mid-gesture: wrap live on fine pointers only
+      if(!coarse.matches&&loopFix()){lockedEl=nearest(); if(autoOn)autoPos=wheel.scrollLeft;}
       req(); if(nextBtn)nextBtn.classList.remove('hint');
       if(autoOn){markCentred();return;}      // drifting: no snap, no pop, no haptic
       clearTimeout(idleT); idleT=setTimeout(settle,200);
