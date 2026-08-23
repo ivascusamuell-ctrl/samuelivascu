@@ -129,6 +129,14 @@ html,body{height:100%;margin:0;padding:0}
 .videos .video-card{flex:0 0 48%;margin:0 1%;scroll-snap-align:center;
   transform-origin:center center;will-change:transform,opacity;position:relative}
 .videos .video-card{scroll-snap-stop:always}
+/* Wide monitors only: fit 4 reels instead of 3, with a gentler edge fade so the
+   outer cards stay readable rather than washing out. Narrower screens unchanged. */
+@media (min-width:1700px) and (pointer:fine){
+  .videos{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 9%,#000 91%,transparent 100%);
+          mask-image:linear-gradient(to right,transparent 0,#000 9%,#000 91%,transparent 100%)}
+  .videos::before,.videos::after{flex:0 0 36%}
+  .videos .video-card{flex:0 0 28%;margin:0 1%}
+}
 .video-card .yt-thumb{transition:box-shadow .4s cubic-bezier(0.16,1,0.3,1)}
 .video-card.centered .yt-thumb{box-shadow:0 0 0 1px rgba(25,25,25,0.10),0 14px 34px rgba(0,0,0,0.20)}
 .video-card .video-label{transition:color .35s ease,border-color .35s ease}
@@ -389,7 +397,7 @@ body{background:var(--body-bg)}
 
   <footer class="footer">
     <span class="footer-text footer-copyright">© 2026 Samuel Ivascu<br>All music and compositions on this site are the intellectual property of Samuel Ivascu. Unauthorised use, reproduction, or distribution is strictly prohibited.</span>
-    <span class="footer-text">sam.ivascu.music@gmail.com</span>
+    <span class="footer-text">contact@ivascumusic.com</span>
   </footer>
 </div>
 
@@ -767,7 +775,13 @@ async function submitForm(){
 
     function setW(){return (N>1&&cards.length>N)?(cards[N].offsetLeft-cards[0].offsetLeft):0;}
     let raf=null;
-    function cfg(){return mq.matches?{sc:0.26,op:0.55,play:1.10}:{sc:0.14,op:0.45,play:1.05};}
+    const wide=matchMedia('(min-width:1700px) and (pointer:fine)');
+    function cfg(){
+      if(mq.matches)return {sc:0.26,op:0.55,play:1.10};
+      // 4-up: outer cards sit further from centre, so ease the falloff to keep them legible
+      if(wide.matches)return {sc:0.10,op:0.30,play:1.05};
+      return {sc:0.14,op:0.45,play:1.05};
+    }
     // Percentage widths round to sub-pixels, so sets aren't all the same width.
     // Jump by the exact offset between a card and its twin instead of an average.
     function loopFix(){
@@ -965,6 +979,7 @@ async function submitForm(){
     clearTimeout(autoIdle); autoIdle=setTimeout(startAuto,AUTO_DELAY);
     addEventListener('resize',req);
     if(mq.addEventListener)mq.addEventListener('change',req);
+    if(wide.addEventListener)wide.addEventListener('change',()=>{req();setTimeout(req,80);});
     originals.forEach(c=>c.addEventListener('animationend',()=>{c.classList.add('entered');req();},{once:true}));
     setTimeout(()=>{originals.forEach(c=>c.classList.add('entered'));req();},1300);
     // start on the middle (real) set so it can scroll both ways forever
