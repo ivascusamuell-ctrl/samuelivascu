@@ -309,10 +309,10 @@ body{background:var(--body-bg)}
 .feature-meta a.dl-chip{display:inline-flex;align-items:center;gap:6px;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;text-decoration:none;
   color:var(--text);border:0.5px solid rgba(25,25,25,0.38);border-radius:999px;padding:5px 10px;cursor:pointer}
 .feature-meta a.dl-chip svg{opacity:1}
-.feature-meta > *{transition:transform .2s ease,box-shadow .2s ease}
-.feature-meta > *:hover{transform:translateY(-3px);box-shadow:0 4px 10px rgba(25,25,25,0.08)}
+.feature-meta span,.feature-meta a{transition:transform .2s ease,box-shadow .2s ease}
+.feature-meta span:hover,.feature-meta a:hover{transform:translateY(-3px);box-shadow:0 4px 10px rgba(25,25,25,0.08)}
 .feature-meta a.dl-chip:focus-visible{outline:1px solid var(--bur);outline-offset:2px}
-@media (prefers-reduced-motion:reduce){.feature-meta > *{transition:none}.feature-meta > *:hover{transform:none}}
+@media (prefers-reduced-motion:reduce){.feature-meta span,.feature-meta a{transition:none}.feature-meta span:hover,.feature-meta a:hover{transform:none}}
 .feature-actions{display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:1.4rem}
 .btn-steam{background:var(--bur);color:var(--peri);border-color:var(--bur)}
 .btn-steam:hover{background:#2a2a2a;color:#fff;border-color:#2a2a2a}
